@@ -1,3 +1,4 @@
+#%%
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
@@ -11,8 +12,10 @@ import numpy as np
 from data import *
 from model import Encoder,Decoder
 
+#%%
 USE_CUDA = torch.cuda.is_available()
-
+USE_CUDA
+#%%
 def train(config):
     
     train_data, word2index, tag2index, intent2index = preprocessing(config.file_path,config.max_length)
@@ -57,7 +60,7 @@ def train(config):
             loss_2 = loss_function_2(intent_score,intent_target)
 
             loss = loss_1+loss_2
-            losses.append(loss.data.cpu().numpy()[0] if USE_CUDA else loss.data.numpy()[0])
+            losses.append(loss.data.cpu().numpy() if USE_CUDA else loss.data.numpy())
             loss.backward()
 
             torch.nn.utils.clip_grad_norm(encoder.parameters(), 5.0)
@@ -80,9 +83,10 @@ def train(config):
                 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--file_path', type=str, default='./data/atis-2.train.w-intent.iob' ,
+    path = r'G:\Mi unidad\CLASES\PUCP\2.Clases\Ciclo-II-DL\Proyecto-DL\JoinIntentDetectionSlotFilling\Entregables\Entregable01\RNN-for-Joint-NLU-master'
+    parser.add_argument('--file_path', type=str, default= path + "\\" +"atis-2.train.w-intent.iob" ,
                         help='path of train data')
-    parser.add_argument('--model_dir', type=str, default='./models/' ,
+    parser.add_argument('--model_dir', type=str, default= path + "\\" +"\models" ,
                         help='path for saving trained models')
 
     # Model parameters
