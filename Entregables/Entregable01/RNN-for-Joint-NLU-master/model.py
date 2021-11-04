@@ -4,9 +4,12 @@ from torch.autograd import Variable
 import torch.optim as optim
 import torch.nn.functional as F
 
+# Revisar si se pueden usar GPUs
 USE_CUDA = torch.cuda.is_available()
 
+# Clase con funciones para realizar la codificación
 class Encoder(nn.Module):
+    # Constructor: se inicializan los atributos que hacen referencia a los tamaños de la variable de entrada, embedding, capa oculta, numero de capas y tamano de batch 
     def __init__(self, input_size,embedding_size, hidden_size,batch_size=16 ,n_layers=1):
         super(Encoder, self).__init__()
         
@@ -19,23 +22,19 @@ class Encoder(nn.Module):
         self.embedding = nn.Embedding(input_size, embedding_size)
         self.lstm = nn.LSTM(embedding_size, hidden_size, n_layers, batch_first=True,bidirectional=True)
     
+    # Se inicializan los pesos de los embeddings
     def init_weights(self):
         self.embedding.weight.data.uniform_(-0.1, 0.1)
         #self.lstm.weight.data.
     
+    # Se inicializan los parámetros de las capas ocultas
     def init_hidden(self,input):
         hidden = Variable(torch.zeros(self.n_layers*2, input.size(0), self.hidden_size)).cuda() if USE_CUDA else Variable(torch.zeros(self.n_layers*2, input.size(0), self.hidden_size))
         context = Variable(torch.zeros(self.n_layers*2, input.size(0), self.hidden_size)).cuda() if USE_CUDA else Variable(torch.zeros(self.n_layers*2, input.size(0), self.hidden_size))
         return (hidden,context)
      
     def forward(self, input,input_masking):
-        """
-        input : B,T (LongTensor)
-        input_masking : B,T (PAD 마스킹한 ByteTensor)
-        
-        <PAD> 제외한 리얼 Context를 다시 만들어서 아웃풋으로
-        """
-        
+                
         self.hidden = self.init_hidden(input)
         
         embedded = self.embedding(input)
@@ -49,8 +48,9 @@ class Encoder(nn.Module):
             
         return output, torch.cat(real_context).view(input.size(0),-1).unsqueeze(1)
 
+# Clase con funciones para realizar la decodificación
 class Decoder(nn.Module):
-    
+    # Constructor: se inicializan los atributos que hacen referencia a los tamaños de la variable de entrada, embedding, capa oculta, numero de capas, tamano de batch y factor de dropout 
     def __init__(self,slot_size,intent_size,embedding_size,hidden_size,batch_size=16,n_layers=1,dropout_p=0.1):
         super(Decoder, self).__init__()
         
@@ -70,7 +70,8 @@ class Decoder(nn.Module):
         self.attn = nn.Linear(self.hidden_size,self.hidden_size) # Attention
         self.slot_out = nn.Linear(self.hidden_size*2, self.slot_size)
         self.intent_out = nn.Linear(self.hidden_size*2,self.intent_size)
-    
+
+    # Se inicializan los pesos de los embeddings
     def init_weights(self):
         self.embedding.weight.data.uniform_(-0.1, 0.1)
         #self.out.bias.data.fill_(0)
@@ -99,6 +100,7 @@ class Decoder(nn.Module):
         
         return context # B,1,D
     
+    # Se inicializan los parámetros de las capas ocultas
     def init_hidden(self,input):
         hidden = Variable(torch.zeros(self.n_layers*1, input.size(0), self.hidden_size)).cuda() if USE_CUDA else Variable(torch.zeros(self.n_layers*2,input.size(0), self.hidden_size))
         context = Variable(torch.zeros(self.n_layers*1, input.size(0), self.hidden_size)).cuda() if USE_CUDA else Variable(torch.zeros(self.n_layers*2, input.size(0), self.hidden_size))
