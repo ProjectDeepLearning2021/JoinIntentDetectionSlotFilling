@@ -1,2 +1,0 @@
-* Buscar modelo en CNN para analizar resultados
-* 
